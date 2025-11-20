@@ -13,9 +13,9 @@ export default function Header() {
         {/* 로고 */}
         <NavLink
           to="/"
-          className="flex items-center gap-2 text-sm font-semibold tracking-tight text-neutral-800"
+          className="flex items-center gap-2 text-xl font-semibold tracking-tight text-neutral-800"
         >
-          <span className="text-lg">🔍</span>
+          <span>🔍</span>
           <span>REPOINSIGHT</span>
         </NavLink>
 

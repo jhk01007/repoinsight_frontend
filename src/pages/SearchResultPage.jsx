@@ -27,17 +27,41 @@ export default function SearchResultPage() {
         </p>
       </div>
 
+      <div className="w-full flex justify-start mt-2 px-2">
+        <button
+          type="button"
+          onClick={() => navigate("/")}
+          className="cursor-pointer rounded-full bg-neutral-900 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-800 shadow"
+        >
+          ← 다시 검색하기
+        </button>
+      </div>
+
       <div className="rounded-2xl border p-8 bg-white h-[650px] overflow-y-auto">
-        {repositories.map((repo) => (
-          <RepoResultCard
-            key={repo.html_url ?? repo.name}
-            name={repo.name}
-            url={repo.html_url}
-            stars={repo.stargazers_count}
-            features={repo.function_summary}
-            languages={repo.languages}
-          />
-        ))}
+        {repositories.length === 0 ? (
+          <div className="flex h-full items-center justify-center">
+            <div className="flex flex-col items-center gap-3 rounded-2xl px-8 py-6">
+              <div className="text-4xl">🔍</div>
+              <p className="text-sm font-semibold text-neutral-800">
+                검색 결과가 없어요
+              </p>
+              <p className="text-xs text-neutral-500">
+                키워드를 조금 다르게 입력해 보거나 언어를 변경해서 다시 검색해 주세요.
+              </p>
+            </div>
+          </div>
+        ) : (
+          repositories.map((repo) => (
+            <RepoResultCard
+              key={repo.html_url ?? repo.name}
+              name={repo.name}
+              url={repo.html_url}
+              stars={repo.stargazers_count}
+              features={repo.function_summary}
+              languages={repo.languages}
+            />
+          ))
+        )}
       </div>
     </section>
   );
