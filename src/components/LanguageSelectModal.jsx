@@ -1,22 +1,7 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import LanguageTag from "./LanguageTag.jsx";
 
-const LANGUAGE_OPTIONS = [
-  "C",
-  "C++",
-  "C#",
-  "Go",
-  "Java",
-  "JavaScript",
-  "Kotlin",
-  "PHP",
-  "Python",
-  "Ruby",
-  "Rust",
-  "Scala",
-  "Swift",
-  "TypeScript",
-];
+const API_BASE_URL = "http://localhost:8000";
 
 export default function LanguageSelectModal({
   selectedLanguages,
@@ -25,6 +10,61 @@ export default function LanguageSelectModal({
 }) {
   const [searchTerm, setSearchTerm] = useState("");
   const [draftSelected, setDraftSelected] = useState(selectedLanguages);
+  const [options, setOptions] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [fetchError, setFetchError] = useState(null);
+
+  const trimmedSearch = searchTerm.trim();
+  const hasSearch = trimmedSearch.length > 0;
+
+  // 🔎 검색어가 바뀔 때마다 언어 검색 API 호출
+  useEffect(() => {
+    const query = trimmedSearch;
+
+    // 검색어 없으면 요청 안 보내고 상태 초기화
+    if (!query) {
+      setOptions([]);
+      setFetchError(null);
+      return;
+    }
+
+    const controller = new AbortController();
+
+    async function fetchLanguages() {
+      try {
+        setLoading(true);
+        setFetchError(null);
+
+        const response = await fetch(
+          `${API_BASE_URL}/api/v1/repositories/languages/search?query=${encodeURIComponent(
+            query,
+          )}`,
+          { signal: controller.signal },
+        );
+
+        if (!response.ok) {
+          throw new Error(`Failed to fetch languages: ${response.status}`);
+        }
+
+        // 응답 타입: { results: string[] }
+        const data = await response.json();
+        const results = Array.isArray(data.results) ? data.results : [];
+        setOptions(results);
+      } catch (error) {
+        if (error.name === "AbortError") return;
+        setFetchError(error);
+        setOptions([]);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchLanguages();
+
+    return () => {
+      controller.abort();
+    };
+  }, [trimmedSearch]);
 
   const handleAddLanguage = (lang) => {
     if (!draftSelected.includes(lang)) {
@@ -43,12 +83,16 @@ export default function LanguageSelectModal({
   const filteredOptions = useMemo(() => {
     const term = searchTerm.trim().toLowerCase();
 
-    return LANGUAGE_OPTIONS.filter((lang) => {
+    if (!hasSearch) {
+      return [];
+    }
+
+    return options.filter((lang) => {
       if (draftSelected.includes(lang)) return false;
       if (!term) return true;
       return lang.toLowerCase().includes(term);
     });
-  }, [searchTerm, draftSelected]);
+  }, [searchTerm, draftSelected, options, hasSearch]);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-[1px]">
@@ -58,7 +102,7 @@ export default function LanguageSelectModal({
           <button
             type="button"
             onClick={onClose}
-            className="text-sm text-neutral-500 hover:text-neutral-800 cursor-pointer"
+            className="cursor-pointer text-sm text-neutral-500 hover:text-neutral-800"
           >
             ←
           </button>
@@ -66,14 +110,12 @@ export default function LanguageSelectModal({
             <h2 className="text-sm font-semibold text-neutral-900">
               언어 선택
             </h2>
-            <p className="text-[11px] text-neutral-400">
-              중복 선택 가능
-            </p>
+            <p className="text-[11px] text-neutral-400">중복 선택 가능</p>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="text-sm text-neutral-400 hover:text-neutral-700 cursor-pointer"
+            className="cursor-pointer text-sm text-neutral-400 hover:text-neutral-700"
           >
             ✕
           </button>
@@ -91,8 +133,20 @@ export default function LanguageSelectModal({
         </div>
 
         {/* 추천 리스트 */}
-        <div className="mb-4 max-h-40 overflow-y-auto rounded-xl border border-neutral-200 bg-neutral-50">
-          {filteredOptions.length === 0 ? (
+        <div className="mb-4 h-40 overflow-y-auto rounded-xl border border-neutral-200 bg-neutral-50">
+          {!hasSearch ? (
+            <p className="px-4 py-3 text-sm text-neutral-400">
+              검색어를 입력해 주세요.
+            </p>
+          ) : loading ? (
+            <p className="px-4 py-3 text-sm text-neutral-400">
+              언어 목록을 불러오는 중입니다...
+            </p>
+          ) : fetchError ? (
+            <p className="px-4 py-3 text-sm text-red-500">
+              언어 목록을 불러오지 못했어요. 잠시 후 다시 시도해 주세요.
+            </p>
+          ) : filteredOptions.length === 0 ? (
             <p className="px-4 py-3 text-sm text-neutral-400">
               일치하는 언어가 없어요.
             </p>
@@ -133,7 +187,7 @@ export default function LanguageSelectModal({
           <button
             type="button"
             onClick={handleSaveClick}
-            className="rounded-full bg-neutral-900 px-6 py-2 text-sm font-medium text-white hover:bg-neutral-800 cursor-pointer"
+            className="cursor-pointer rounded-full bg-neutral-900 px-6 py-2 text-sm font-medium text-white hover:bg-neutral-800"
           >
             저장
           </button>

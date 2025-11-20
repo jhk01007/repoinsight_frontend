@@ -2,27 +2,17 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import LanguageTag from "../components/LanguageTag.jsx";
 import LanguageSelectModal from "../components/LanguageSelectModal.jsx";
-import useSearchFetch from "../hooks/useSearchFetch.js";
 
-const INITIAL_LANGUAGES = ["Python", "JavaScript", "Ruby", "Go"];
+const API_BASE_URL = "http://localhost:8000";
 
-function SearchPage() {
+export default function SearchPage() {
   const [query, setQuery] = useState("");
-  const [selectedLanguages, setSelectedLanguages] =
-    useState(INITIAL_LANGUAGES);
+  const [selectedLanguages, setSelectedLanguages] = useState([]);
   const [isLanguageModalOpen, setIsLanguageModalOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   const navigate = useNavigate();
-
-  // /api/v1/repositories/search 로 POST 요청 보내는 훅
-  const {
-    data: searchResult,
-    loading,
-    error,
-    execute: fetchRepositories,
-  } = useSearchFetch("/api/v1/repositories/search", {
-    method: "POST",
-  });
 
   const handleRemoveLanguage = (lang) => {
     setSelectedLanguages((prev) => prev.filter((item) => item !== lang));
@@ -45,35 +35,51 @@ function SearchPage() {
     event.preventDefault();
 
     const trimmed = query.trim();
-    if (!trimmed) {
-      // keyword는 필수라서 빈값이면 그냥 리턴 (필요하면 안내문 추가)
-      return;
-    }
+    if (!trimmed) return;
 
     const payload = {
       keyword: trimmed,
-      languages: selectedLanguages, // [] 가능
+      languages: selectedLanguages,
     };
 
     try {
-      const result = await fetchRepositories(payload);
+      setLoading(true);
+      setError(null);
 
-      // 서버 응답(result)을 검색 결과 페이지로 넘기면서 이동
+      const response = await fetch(
+        `${API_BASE_URL}/api/v1/repositories/search`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(payload),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`Request failed with status ${response.status}`);
+      }
+
+      const result = await response.json();
+
+
       navigate("/results", {
         state: {
-          repositories: result, // 서버에서 온 배열 그대로
+          repositories: result.results, // 배열만 넘겨줌
           keyword: trimmed,
           languages: selectedLanguages,
         },
       });
     } catch (e) {
-      console.error("검색 요청 실패:", e);
+      setError(e.message || "검색 중 오류가 발생했습니다.");
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
     <section className="relative space-y-8">
-      {/* 페이지 상단 제목 */}
       <div className="space-y-2 text-center">
         <h1 className="text-3xl font-semibold tracking-tight">
           레포지토리 검색
@@ -83,7 +89,6 @@ function SearchPage() {
         </p>
       </div>
 
-      {/* 검색 카드 */}
       <div className="rounded-2xl border border-neutral-200 bg-white px-16 py-56 shadow-sm">
         <div className="flex flex-col items-center gap-20">
           <div className="flex flex-col items-center gap-2">
@@ -103,7 +108,6 @@ function SearchPage() {
             className="flex w-full flex-col gap-4 text-sm"
           >
             <div className="flex flex-col gap-6 md:flex-row md:items-center">
-              {/* 언어 선택 버튼 */}
               <button
                 type="button"
                 onClick={handleLanguageButtonClick}
@@ -113,7 +117,6 @@ function SearchPage() {
                 <span className="text-xs text-neutral-400">▼</span>
               </button>
 
-              {/* 검색 인풋 + 버튼 */}
               <div className="flex flex-1 items-center rounded-full border border-neutral-300 bg-neutral-50 px-4 py-2">
                 <input
                   type="text"
@@ -131,7 +134,6 @@ function SearchPage() {
               </div>
             </div>
 
-            {/* 선택된 언어 태그들 */}
             <div className="space-y-2">
               <div className="flex flex-wrap gap-2">
                 {selectedLanguages.map((lang) => (
@@ -145,22 +147,22 @@ function SearchPage() {
 
               {selectedLanguages.length > 0 && (
                 <p className="text-xs text-neutral-400">
-                  X 버튼을 눌러 지울 수 있어요!
+                  X 버튼을 눌러 지울 수 있어요
                 </p>
               )}
             </div>
 
-            {/* 에러 메시지 (있다면) */}
             {error && (
               <p className="text-xs text-red-500">
                 검색 중 오류가 발생했어요. 잠시 후 다시 시도해 주세요.
+                <br />
+                <span className="text-[11px] text-neutral-400">{error}</span>
               </p>
             )}
           </form>
         </div>
       </div>
 
-      {/* 언어 선택 모달 */}
       {isLanguageModalOpen && (
         <LanguageSelectModal
           selectedLanguages={selectedLanguages}
@@ -169,12 +171,15 @@ function SearchPage() {
         />
       )}
 
-      {/* 로딩 오버레이 */}
       {loading && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
-          <div className="rounded-2xl bg-white px-6 py-4 shadow-md">
-            <p className="text-sm text-neutral-700">
-              레포지토리를 검색하고 있어요...
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+          <div className="flex flex-col items-center gap-3 rounded-2xl bg-white px-8 py-6 shadow-xl">
+            <div className="h-10 w-10 animate-spin rounded-full border-2 border-neutral-300 border-t-neutral-900" />
+            <p className="text-sm font-medium text-neutral-900">
+              레포지토리를 검색하고 있어요
+            </p>
+            <p className="text-xs text-neutral-500">
+              GitHub 레포지토리를 불러오고 있어요. 잠시만 기다려 주세요!
             </p>
           </div>
         </div>
@@ -182,5 +187,3 @@ function SearchPage() {
     </section>
   );
 }
-
-export default SearchPage;
