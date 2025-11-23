@@ -52,7 +52,9 @@ export default function SearchCard({
               />
               <button
                 type="submit"
-                className="ml-2 shrink-0 rounded-full bg-neutral-900 px-4 py-1.5 text-sm font-medium text-white hover:bg-neutral-800 cursor-pointer"
+                disabled={query.trim() === ""}
+                className={`ml-2 shrink-0 rounded-full px-4 py-1.5 text-sm font-medium text-white 
+                  ${query.trim() === "" ? "bg-neutral-400 cursor-not-allowed" : "bg-neutral-900 hover:bg-neutral-800 cursor-pointer"}`}
               >
                 검색
               </button>

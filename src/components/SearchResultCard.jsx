@@ -1,5 +1,4 @@
-// src/components/RepoResultCard.jsx
-function RepoResultCard({
+function SearchResultCard({
   name,
   url,
   stars,
@@ -67,4 +66,4 @@ function RepoResultCard({
   );
 }
 
-export default RepoResultCard;
+export default SearchResultCard;

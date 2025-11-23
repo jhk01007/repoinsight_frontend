@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import RepoResultCard from "../components/RepoResultCard.jsx";
+import SearchResultCard from "../components/SearchResultCard.jsx";
 
 export default function SearchResultPage() {
   const location = useLocation();
@@ -10,7 +10,7 @@ export default function SearchResultPage() {
   const keyword = location.state?.keyword ?? "";
   const languages = location.state?.languages ?? [];
 
-  // 👉 state 없이 들어오면 검색화면으로 돌려보냄
+  // state 없이 들어오면 검색화면으로 돌려보냄
   useEffect(() => {
     if (!location.state) {
       navigate("/", { replace: true });
@@ -37,7 +37,7 @@ export default function SearchResultPage() {
         </button>
       </div>
 
-      <div className="rounded-2xl border p-8 bg-white h-[650px] overflow-y-auto">
+      <div className="rounded-2xl border p-8 bg-white h-[650px] overflow-y-auto space-y-6">
         {repositories.length === 0 ? (
           <div className="flex h-full items-center justify-center">
             <div className="flex flex-col items-center gap-3 rounded-2xl px-8 py-6">
@@ -52,7 +52,7 @@ export default function SearchResultPage() {
           </div>
         ) : (
           repositories.map((repo) => (
-            <RepoResultCard
+            <SearchResultCard
               key={repo.html_url ?? repo.name}
               name={repo.name}
               url={repo.html_url}
