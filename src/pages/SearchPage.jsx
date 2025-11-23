@@ -62,13 +62,13 @@ export default function SearchPage() {
       // 서버 에러 메시지 읽기
       if (!response.ok) {
         let errorMessage = `Request failed with status ${response.status}`;
-        console.log(errorMessage)
         try {
           const data = await response.json();
           errorMessage =
             data.message || data.error || data.detail || errorMessage;
         } catch (_) { }
 
+        console.log(errorMessage)
         throw new Error(errorMessage);
       }
 
