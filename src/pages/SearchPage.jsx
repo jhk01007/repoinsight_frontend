@@ -59,8 +59,17 @@ export default function SearchPage() {
         }
       );
 
+      // 서버 에러 메시지 읽기
       if (!response.ok) {
-        throw new Error(`Request failed with status ${response.status}`);
+        let errorMessage = `Request failed with status ${response.status}`;
+        console.log(errorMessage)
+        try {
+          const data = await response.json();
+          errorMessage =
+            data.message || data.error || data.detail || errorMessage;
+        } catch (_) { }
+
+        throw new Error(errorMessage);
       }
 
       const result = await response.json();
