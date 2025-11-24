@@ -16,7 +16,7 @@ export default function LanguageSelectModal({
   const trimmedSearch = searchTerm.trim();
   const hasSearch = trimmedSearch.length > 0;
 
-  // 🔎 검색어가 바뀔 때마다 언어 검색 API 호출
+  // 검색어가 바뀔 때마다 언어 검색 API 호출
   useEffect(() => {
     const query = trimmedSearch;
 
