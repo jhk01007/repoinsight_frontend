@@ -4,8 +4,8 @@ import LanguageSelectModal from "../components/LanguageSelectModal.jsx";
 import SearchHeader from "../components/SearchHeader.jsx";
 import SearchCard from "../components/SearchCard.jsx";
 import LoadingOverlay from "../components/LoadingOverlay.jsx";
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
-const API_BASE_URL = "http://localhost:8000";
 
 export default function SearchPage() {
   const [query, setQuery] = useState("");
