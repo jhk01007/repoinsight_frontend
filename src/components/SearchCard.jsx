@@ -21,7 +21,7 @@ export default function SearchCard({
             </span>
           </div>
           <p className="text-sm text-neutral-500">
-            찾고 싶은 레포지토리의 언어와 키워드를 입력해주세요!
+            찾고 싶은 레포지토리의 언어와 키워드를 입력해주세요
           </p>
         </div>
 
